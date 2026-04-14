@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { initializeApp } from "firebase/app";
 import { getAuth, signInWithPopup, GoogleAuthProvider, signOut } from "firebase/auth";
 import { BACKEND_URL, GAME_ID } from "../constants";
+import srkImgSrc from "../assets/srk.png";
 
 // Safe read from index.html
 const config = window.APP_CONFIG || {};
@@ -108,12 +109,29 @@ export default function Login() {
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        background: "radial-gradient(circle at top left, #1a1a2e, #0f0c29, #24243e)",
         fontFamily: "Arial, sans-serif",
         boxSizing: "border-box",
-        padding: "20px"
+        padding: "20px",
+        position: "relative",
+        overflow: "hidden",
+        background: "#0a0a0c"
       }}
     >
+      {/* Background Image Layer */}
+      <div
+        style={{
+          position: "absolute",
+          top: "-5%",
+          left: "-5%",
+          width: "110%",
+          height: "110%",
+          backgroundImage: `url(${srkImgSrc})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          filter: "blur(12px) brightness(0.35)",
+          zIndex: 0
+        }}
+      />
       <div
         style={{
           width: "min(92vw, 440px)",
@@ -125,7 +143,9 @@ export default function Login() {
           boxShadow: "0 24px 70px rgba(0,0,0,0.45)",
           textAlign: "center",
           color: "white",
-          boxSizing: "border-box"
+          boxSizing: "border-box",
+          position: "relative",
+          zIndex: 1
         }}
       >
         {/* <div
