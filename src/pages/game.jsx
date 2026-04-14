@@ -44,6 +44,12 @@ export default function Game() {
 
   const [gameState, setGameState] = useState('start'); // start, playing, hit
   const [score, setScore] = useState(0);
+  const [windowSize, setWindowSize] = useState({
+    width: window.innerWidth,
+    height: window.innerHeight
+  });
+
+  const touchStart = useRef({ x: 0, y: 0 });
 
   // References to keep state mutable inside the requestAnimationFrame loop
   const gameData = useRef({
@@ -141,8 +147,57 @@ export default function Game() {
   };
 
   useEffect(() => {
+    const handleResize = () => {
+      setWindowSize({ width: window.innerWidth, height: window.innerHeight });
+    };
+
+    const handleTouchStart = (e) => {
+      touchStart.current = {
+        x: e.touches[0].clientX,
+        y: e.touches[0].clientY
+      };
+    };
+
+    const handleTouchEnd = (e) => {
+      if (!touchStart.current.x) return;
+      
+      const touchEnd = {
+        x: e.changedTouches[0].clientX,
+        y: e.changedTouches[0].clientY
+      };
+
+      const dx = touchEnd.x - touchStart.current.x;
+      const dy = touchEnd.y - touchStart.current.y;
+
+      const p = gameData.current.player;
+      
+      // Threshold for swipe
+      if (Math.abs(dx) > Math.abs(dy)) {
+        if (Math.abs(dx) > 30) {
+          if (dx > 0) { p.nextVx = SPEED; p.nextVy = 0; }
+          else { p.nextVx = -SPEED; p.nextVy = 0; }
+        }
+      } else {
+        if (Math.abs(dy) > 30) {
+          if (dy > 0) { p.nextVx = 0; p.nextVy = SPEED; }
+          else { p.nextVx = 0; p.nextVy = -SPEED; }
+        }
+      }
+      
+      touchStart.current = { x: 0, y: 0 };
+    };
+
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener("resize", handleResize);
+    window.addEventListener("touchstart", handleTouchStart, { passive: false });
+    window.addEventListener("touchend", handleTouchEnd);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchend", handleTouchEnd);
+    };
   }, []);
 
   const hitMonster = () => {
@@ -475,6 +530,11 @@ export default function Game() {
     }
   };
 
+  const isSmallScreen = windowSize.width < 1100;
+  // Calculate scale to fit canvas on mobile width (with some margins)
+  const availableWidth = windowSize.width - 32; // 16px padding on each side
+  const canvasScale = Math.min(1, availableWidth / WIDTH);
+
   return (
     <div
       style={{
@@ -490,7 +550,8 @@ export default function Game() {
         overflow: "hidden",
         boxSizing: "border-box",
         position: "relative",
-        gap: "40px"
+        gap: isSmallScreen ? "10px" : "40px",
+        padding: "10px"
       }}
     >
       <div style={{
@@ -498,29 +559,35 @@ export default function Game() {
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "center",
-        gap: "40px"
+        gap: isSmallScreen ? "0px" : "40px",
+        width: "100%"
       }}>
         {/* Left Haklaman Image */}
-        <div style={{
-          height: HEIGHT + 100,
-          width: "250px",
-          borderRadius: "16px",
-          overflow: "hidden",
-          border: "4px solid white",
-          boxShadow: "0 0 20px rgba(255,255,255,0.3)"
-        }}>
-          <img
-            src={haklamanImgSrc}
-            alt="Haklaman Left"
-            style={{ width: "100%", height: "100%", objectFit: "cover" }}
-          />
-        </div>
+        {!isSmallScreen && (
+          <div style={{
+            height: HEIGHT + 100,
+            width: "250px",
+            borderRadius: "16px",
+            overflow: "hidden",
+            border: "4px solid white",
+            boxShadow: "0 0 20px rgba(255,255,255,0.3)"
+          }}>
+            <img
+              src={haklamanImgSrc}
+              alt="Haklaman Left"
+              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            />
+          </div>
+        )}
 
         {/* Center Game Column */}
         <div style={{
           display: "flex",
           flexDirection: "column",
-          alignItems: "center"
+          alignItems: "center",
+          transform: `scale(${canvasScale})`,
+          transformOrigin: "center center",
+          width: isSmallScreen ? "100%" : "auto"
         }}>
           {/* HUD Background Panel */}
           <div style={{
@@ -549,7 +616,8 @@ export default function Game() {
             boxShadow: "0 10px 40px rgba(0,0,0,0.8)",
             borderRadius: "8px",
             overflow: "hidden",
-            border: "4px solid #1e3a8a"
+            border: "4px solid #1e3a8a",
+            touchAction: "none" // Prevent panning/zooming on the canvas
           }}>
             <canvas
               ref={canvasRef}
@@ -597,20 +665,22 @@ export default function Game() {
         </div>
 
         {/* Right Haklaman Image */}
-        <div style={{
-          height: HEIGHT + 100,
-          width: "250px",
-          borderRadius: "16px",
-          overflow: "hidden",
-          border: "4px solid white",
-          boxShadow: "0 0 20px rgba(255,255,255,0.3)"
-        }}>
-          <img
-            src={haklamanImgSrc}
-            alt="Haklaman Right"
-            style={{ width: "100%", height: "100%", objectFit: "cover" }}
-          />
-        </div>
+        {!isSmallScreen && (
+          <div style={{
+            height: HEIGHT + 100,
+            width: "250px",
+            borderRadius: "16px",
+            overflow: "hidden",
+            border: "4px solid white",
+            boxShadow: "0 0 20px rgba(255,255,255,0.3)"
+          }}>
+            <img
+              src={haklamanImgSrc}
+              alt="Haklaman Right"
+              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            />
+          </div>
+        )}
       </div>
 
       {/* Spit Hit Effect - Overlay over everything */}
